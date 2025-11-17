@@ -12,6 +12,13 @@ After cloning the repository on the server, we just need to run the following co
 k3sup install --local
 ```
 
+Note that `k3sup` creates the `kubeconfig` file in the current working directory from where the command is run. We can move it to the default location with:
+
+```bash
+mkdir -p $HOME/.kube
+mv kubeconfig $HOME/.kube/config
+```
+
 ### Configure Kubernetes
 
 #### Increase the Maximum Number of Pods Allowed
@@ -22,7 +29,7 @@ After installing Kubernetes, we need to increase the maximum number of pods allo
 sudo vim /etc/systemd/system/k3s.service
 ```
 
-and adding `'--kubelet-arg=max-pods=433'` to the `ExecStart` command.
+and adding `'--kubelet-arg=max-pods=433'` to the end of the `ExecStart` command.
 
 After that, we need to reload the systemd configuration and restart k3s:
 
@@ -45,12 +52,12 @@ Since challenges are deployed on ports <30000 (in our case, you can decide to go
 sudo vim /etc/systemd/system/k3s.service
 ```
 
-and add `'--service-node-port-range=MIN_PORT-MAX_PORT'` to the `ExecStart` command.
+and add `'--service-node-port-range=MIN_PORT-MAX_PORT'` to the end of the `ExecStart` command.
 
 Then, we need to reload the systemd configuration and restart k3s:
 
 ```bash
-sudo systemctl daemon-reload` and `sudo systemctl restart k3s
+sudo systemctl daemon-reload && sudo systemctl restart k3s
 ```
 
 **Note**: the `MIN_PORT` should be high enough to not collide with previously existing services (it is recommended at least above 7000). Even better would be to have the challenges directly within the predefined Kubernetes range >30000.

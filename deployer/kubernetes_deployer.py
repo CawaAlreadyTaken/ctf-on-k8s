@@ -20,6 +20,7 @@ autoscaling_v1 = client.AutoscalingV1Api()
 
 DEFAULT_INTERNAL_PORT = 5000
 REGISTRY = 'registry.local:5000/'
+NAMESPACE = 'ethical-hacking'
 verbose = False
 
 def create_or_update_service(service: dict):
@@ -28,12 +29,12 @@ def create_or_update_service(service: dict):
     '''
     # Check if the service already exists
     try:
-        core_v1.read_namespaced_service(namespace="ethical-hacking", name=service["metadata"]["name"])
+        core_v1.read_namespaced_service(namespace=NAMESPACE, name=service["metadata"]["name"])
         # If the service already exists, update it
-        core_v1.replace_namespaced_service(namespace="ethical-hacking", name=service["metadata"]["name"], body=service)
+        core_v1.replace_namespaced_service(namespace=NAMESPACE, name=service["metadata"]["name"], body=service)
     except Exception as e:
         # If the service does not exist, create it
-        core_v1.create_namespaced_service(namespace="ethical-hacking", body=service)
+        core_v1.create_namespaced_service(namespace=NAMESPACE, body=service)
 
 def create_or_update_deployment(deployment: dict):
     '''
@@ -41,12 +42,12 @@ def create_or_update_deployment(deployment: dict):
     '''
     # Check if the deployment already exists
     try:
-        apps_v1.read_namespaced_deployment(namespace="ethical-hacking", name=deployment["metadata"]["name"])
+        apps_v1.read_namespaced_deployment(namespace=NAMESPACE, name=deployment["metadata"]["name"])
         # If the deployment already exists, update it
-        apps_v1.replace_namespaced_deployment(namespace="ethical-hacking", name=deployment["metadata"]["name"], body=deployment)
+        apps_v1.replace_namespaced_deployment(namespace=NAMESPACE, name=deployment["metadata"]["name"], body=deployment)
     except Exception as e:
         # If the deployment does not exist, create it
-        apps_v1.create_namespaced_deployment(namespace="ethical-hacking", body=deployment)
+        apps_v1.create_namespaced_deployment(namespace=NAMESPACE, body=deployment)
 
 def create_or_update_horizontal_pod_autoscaler(hpa: dict):
     '''
@@ -54,12 +55,12 @@ def create_or_update_horizontal_pod_autoscaler(hpa: dict):
     '''
     # Check if the HorizontalPodAutoscaler already exists
     try:
-        autoscaling_v1.read_namespaced_horizontal_pod_autoscaler(namespace="ethical-hacking", name=hpa["metadata"]["name"])
+        autoscaling_v1.read_namespaced_horizontal_pod_autoscaler(namespace=NAMESPACE, name=hpa["metadata"]["name"])
         # If the HorizontalPodAutoscaler already exists, update it
-        autoscaling_v1.replace_namespaced_horizontal_pod_autoscaler(namespace="ethical-hacking", name=hpa["metadata"]["name"], body=hpa)
+        autoscaling_v1.replace_namespaced_horizontal_pod_autoscaler(namespace=NAMESPACE, name=hpa["metadata"]["name"], body=hpa)
     except Exception as e:
         # If the HorizontalPodAutoscaler does not exist, create it
-        autoscaling_v1.create_namespaced_horizontal_pod_autoscaler(namespace="ethical-hacking", body=hpa)
+        autoscaling_v1.create_namespaced_horizontal_pod_autoscaler(namespace=NAMESPACE, body=hpa)
 
 def create_or_update_resource(resource: dict):
     '''
@@ -87,7 +88,7 @@ def update_pods(images: list[str]):
     Delete and recreate the pods of the images that have been updated.
     '''
     # Get the pods
-    pods = core_v1.list_namespaced_pod(namespace="ethical-hacking", label_selector="securitylab.disi.unitn.it/managed-by=true")
+    pods = core_v1.list_namespaced_pod(namespace=NAMESPACE, label_selector="securitylab.disi.unitn.it/managed-by=true")
     pods_to_delete = []
     for pod in pods.items:
         if pod.spec.containers[0].image in images:
@@ -97,7 +98,7 @@ def update_pods(images: list[str]):
         answer = input(f'Found {len(pods_to_delete)} pods to delete: {pods_to_delete}. Do you want to delete them? [y/N] ')
         if answer.lower() == "y":
             for pod_name in pods_to_delete:
-                core_v1.delete_namespaced_pod(namespace="ethical-hacking", name=pod_name)
+                core_v1.delete_namespaced_pod(namespace=NAMESPACE, name=pod_name)
                 print(f"Deleted pod {pod_name}")
 
 def build_and_push_images(challenges: list[Challenge], ignore_existing: bool = False):
@@ -171,15 +172,15 @@ def clean_cluster():
     Delete all the resources created by this script.
     '''
     print("Cleaning the cluster...")
-    resources = core_v1.list_namespaced_service(namespace="ethical-hacking", label_selector="securitylab.disi.unitn.it/managed-by=true")
+    resources = core_v1.list_namespaced_service(namespace=NAMESPACE, label_selector="securitylab.disi.unitn.it/managed-by=true")
     print(f"Deleting {len(resources.items)} services...")
     for resource in resources.items:
-        core_v1.delete_namespaced_service(namespace="ethical-hacking", name=resource.metadata.name)
+        core_v1.delete_namespaced_service(namespace=NAMESPACE, name=resource.metadata.name)
 
-    resources = apps_v1.list_namespaced_deployment(namespace="ethical-hacking", label_selector="securitylab.disi.unitn.it/managed-by=true")
+    resources = apps_v1.list_namespaced_deployment(namespace=NAMESPACE, label_selector="securitylab.disi.unitn.it/managed-by=true")
     print(f"Deleting {len(resources.items)} deployments...")
     for resource in resources.items:
-        apps_v1.delete_namespaced_deployment(namespace="ethical-hacking", name=resource.metadata.name)
+        apps_v1.delete_namespaced_deployment(namespace=NAMESPACE, name=resource.metadata.name)
 
     print("Cluster cleaned.")
 
@@ -203,6 +204,21 @@ def main(challenges: list[Challenge], build_images: bool, ignore_existing: bool 
     if build_images:
         build_and_push_images(challenges, ignore_existing)
 
+    # Check if the namespace exists, if not create it
+    try:
+        core_v1.read_namespace(name=NAMESPACE)
+    except Exception as e:
+        print(f"Namespace {NAMESPACE} does not exist, creating it...")
+        namespace = {
+            "apiVersion": "v1",
+            "kind": "Namespace",
+            "metadata": {
+                "name": NAMESPACE
+            }
+        }
+        core_v1.create_namespace(body=namespace)
+        print(f"Namespace {NAMESPACE} created.")
+
     for challenge in challenges:
         # If the challenge has no Dockerfile, skip it
         if not os.path.exists(f"{challenge.path}/Dockerfile"):
@@ -224,7 +240,7 @@ def main(challenges: list[Challenge], build_images: bool, ignore_existing: bool 
             "kind": "Deployment",
             "metadata": {
                 "name": challenge.id,
-                "namespace": "ethical-hacking",
+                "namespace": NAMESPACE,
             },
             "spec": {
                 "replicas": 1,
@@ -265,7 +281,7 @@ def main(challenges: list[Challenge], build_images: bool, ignore_existing: bool 
                 "kind": "HorizontalPodAutoscaler",
                 "metadata": {
                     "name": challenge.id,
-                    "namespace": "ethical-hacking",
+                    "namespace": NAMESPACE,
                     "labels": {
                         "securitylab.disi.unitn.it/managed-by": "true"
                     }
@@ -298,7 +314,7 @@ def main(challenges: list[Challenge], build_images: bool, ignore_existing: bool 
             "kind": "Service",
             "metadata": {
                 "name": challenge.id,
-                "namespace": "ethical-hacking",
+                "namespace": NAMESPACE,
                 "labels": {
                     "securitylab.disi.unitn.it/managed-by": "true"
                 }
@@ -332,7 +348,7 @@ def main(challenges: list[Challenge], build_images: bool, ignore_existing: bool 
             print(f"[magenta]Failed to create service for {challenge.id}[/magenta]: {e}", file=sys.stderr)
 
     # Get all the running deployments and delete the ones that are not in the list of deployed challenges
-    deployments = apps_v1.list_namespaced_deployment(namespace="ethical-hacking")
+    deployments = apps_v1.list_namespaced_deployment(namespace=NAMESPACE)
     deployments_to_delete = []
     for deployment in deployments.items:
         if deployment.metadata.name not in [challenge.id for challenge in deployed_deployments]:
@@ -342,11 +358,11 @@ def main(challenges: list[Challenge], build_images: bool, ignore_existing: bool 
         answer = input(f'Found {len(deployments_to_delete)} deployments to delete: {deployments_to_delete}. Do you want to delete them? [y/N] ')
         if answer.lower() == "y":
             for deployment_name in deployments_to_delete:
-                apps_v1.delete_namespaced_deployment(namespace="ethical-hacking", name=deployment_name)
+                apps_v1.delete_namespaced_deployment(namespace=NAMESPACE, name=deployment_name)
                 print(f"Deleted deployment {deployment_name}")
 
     # Get all the running services and delete the ones that are not in the list of deployed challenges
-    services = core_v1.list_namespaced_service(namespace="ethical-hacking")
+    services = core_v1.list_namespaced_service(namespace=NAMESPACE)
     services_to_delete = []
     for service in services.items:
         if service.metadata.name not in [challenge.id for challenge in deployed_services]:
@@ -356,10 +372,10 @@ def main(challenges: list[Challenge], build_images: bool, ignore_existing: bool 
         answer = input(f'Found {len(services_to_delete)} services to delete: {services_to_delete}. Do you want to delete them? [y/N] ')
         if answer.lower() == "y":
             for service_name in services_to_delete:
-                core_v1.delete_namespaced_service(namespace="ethical-hacking", name=service_name)
+                core_v1.delete_namespaced_service(namespace=NAMESPACE, name=service_name)
                 print(f"Deleted service {service_name}")
 
-    hpas = autoscaling_v1.list_namespaced_horizontal_pod_autoscaler(namespace="ethical-hacking")
+    hpas = autoscaling_v1.list_namespaced_horizontal_pod_autoscaler(namespace=NAMESPACE)
     hpas_to_delete = []
     for hpa in hpas.items:
         if hpa.metadata.name not in [challenge.id for challenge in deployed_hpas]:
@@ -369,7 +385,7 @@ def main(challenges: list[Challenge], build_images: bool, ignore_existing: bool 
         answer = input(f'Found {len(hpas_to_delete)} HorizontalPodAutoscalers to delete: {hpas_to_delete}. Do you want to delete them? [y/N] ')
         if answer.lower() == "y":
             for hpa_name in hpas_to_delete:
-                core_v1.delete_namespaced_horizontal_pod_autoscaler(namespace="ethical-hacking", name=hpa_name)
+                core_v1.delete_namespaced_horizontal_pod_autoscaler(namespace=NAMESPACE, name=hpa_name)
                 print(f"Deleted HorizontalPodAutoscaler {hpa_name}")
 
 def dict_to_yaml(d: dict, indent: int = 0) -> str:
