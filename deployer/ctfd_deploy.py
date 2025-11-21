@@ -255,7 +255,7 @@ def main(challenges: list[Challenge]):
             logger.info(f"Setting requirements for {challenge.id}...")
             set_requirement(
                 processed_challenges[challenge.id],
-                [processed_challenges[f"{challenge.category}-{req.replace("_", "-")}"] for req in challenge.config.requires]
+                [processed_challenges[f'{challenge.category}-{req.replace("_", "-")}'] for req in challenge.config.requires]
             )
 
     # Delete challenges that are not in the config

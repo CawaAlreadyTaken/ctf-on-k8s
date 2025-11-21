@@ -6,11 +6,14 @@ __license__ = "MIT"
 
 from kubernetes import client, config
 from multiprocessing import Pool
+from dotenv import load_dotenv
 from scanner import Challenge
 from rich import print
 import subprocess
 import sys
 import os
+
+load_dotenv("config.env")
 
 # Configure the Kubernetes client
 config.load_kube_config()
@@ -20,7 +23,7 @@ autoscaling_v1 = client.AutoscalingV1Api()
 
 DEFAULT_INTERNAL_PORT = 5000
 REGISTRY = 'registry.local:5000/'
-NAMESPACE = 'ethical-hacking'
+NAMESPACE = os.environ.get("NAMESPACE")
 verbose = False
 
 def create_or_update_service(service: dict):
