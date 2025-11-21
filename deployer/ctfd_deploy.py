@@ -6,6 +6,7 @@ __license__ = "MIT"
 
 from scanner import main as scan_challenges
 from scanner import Challenge, Hint
+from dotenv import load_dotenv
 
 import argparse
 import requests
@@ -14,6 +15,8 @@ import sys
 import os
 import re
 
+load_dotenv("config.env")
+load_dotenv("secrets.env")
 CTFD_HOST = os.environ.get("CTFD_HOST", "securitylab.disi.unitn.it")
 CTFD_API_KEY = os.environ.get("CTFD_API_KEY", "")
 CHALLENGES_HOST = os.environ.get("CHALLENGES_HOST", "securitylab.disi.unitn.it")
