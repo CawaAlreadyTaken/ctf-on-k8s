@@ -133,6 +133,7 @@ Each challenge directory should contain:
 ## How to Deploy the Challenges
 
 We assume that CTFd is already set up and running (either in the same Kubernetes cluster or in a different way). For more information on how to set up CTFd, please refer to the [CTFd documentation](https://docs.ctfd.io/).
+After CTFd is set up, you should create a new challenge in CTFd dashboard (usually port is 8000). After this, create a new token in /settings -> Access Tokens. Copy it. It will be useful in the future. We will call it the CTFD_API_KEY.
 
 We also assume that a Kubernetes cluster is already set up and a local registry is deployed on it. For more instructions on how to set up a Kubernetes cluster, please refer to [our documentation](./kubernetes/README.md).
 
@@ -146,12 +147,16 @@ We also assume that a Kubernetes cluster is already set up and a local registry 
 
     # The host of the challenges
     CHALLENGES_HOST="example.it"
+
+    # The k8s namespace where challenges will be deployed
+    # This should NOT be the same used for the docker registry
+    NAMESPACE="example-namespace"
     ```
 
-3. Make sure to update the `secrets.env` file with the correct values:
+3. Make sure to update the `secrets.env` file with the correct values. The CTFD_API_KEY value should be equal to the SECRET_KEY variable defined in CTFd during its setup (`CTFd/docker-compose.yml`):
 
     ```bash
-    # CTFd API key
+    # CTFd API key, the token previously copied
     CTFD_API_KEY="ctfd_aabbccddeeffgghhiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz"
     ```
 
@@ -166,7 +171,7 @@ We also assume that a Kubernetes cluster is already set up and a local registry 
 5. Update or deploy the challenges on CTFd with the following command:
 
     ```bash
-    ./ctfd_deploy.sh
+    python ./deployer/ctfd_deploy.py --challenges path/to/challenges
     ```
 
 ### `kubernetes_deployer.py`
