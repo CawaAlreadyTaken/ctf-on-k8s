@@ -340,13 +340,13 @@ def main(challenges: list[Challenge], build_images: bool, ignore_existing: bool 
             }
         }
 
-        if verbose:
-            print(f"Service for {challenge.id}: {service} on port {challenge.port}")
-        else:
-            print(f"Service for {challenge.id} created on port {challenge.port}")
         try:
             create_or_update_resource(service)
             deployed_services.append(challenge)
+            if verbose:
+                print(f"Service for {challenge.id}: {service} on port {challenge.port}")
+            else:
+                print(f"Service for {challenge.id}: on port {challenge.port}")
         except Exception as e:
             print(f"[magenta]Failed to create service for {challenge.id}[/magenta]: {e}", file=sys.stderr)
 
