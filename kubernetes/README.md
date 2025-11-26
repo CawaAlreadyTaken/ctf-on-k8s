@@ -63,13 +63,13 @@ kubectl get nodes <NODE_NAME> -o json | jq -r '.status.capacity.pods'
 
 #### Set the Range of Node Ports
 
-Since challenges are deployed on ports <30000 (in our case, you can decide to go higher than that though), we need to lower the range of ports allowed in the node port field of services. To do that, we need to edit the `k3s.service` file again:
+We need to specify the range of ports allowed in the node port field of services. To do that, we need to edit the `k3s.service` file again:
 
 ```bash
 sudo vim /etc/systemd/system/k3s.service
 ```
 
-and add `'--service-node-port-range=MIN_PORT-MAX_PORT'` to the end of the `ExecStart` command.
+and add `'--service-node-port-range=MIN_PORT-MAX_PORT'` to the end of the `ExecStart` command. The suggested range is 5000-40000 to have the 5000 included and also include the Traefik (kube traffic manager) ports.
 
 After this, the `ExecStart` command should be something like this:
 ```bash
@@ -78,7 +78,7 @@ ExecStart=/usr/local/bin/k3s \
 	'--tls-san' \
 	'127.0.0.1' \
 	'--kubelet-arg=max-pods=433' \
-	'--service-node-port-range=5000-10000'
+	'--service-node-port-range=5000-40000'
 ```
 
 Then, we need to reload the systemd configuration and restart k3s:
