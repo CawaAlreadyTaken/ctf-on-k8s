@@ -177,6 +177,8 @@ We also assume that a Kubernetes cluster is already set up and a local registry 
     python ./deployer/ctfd_deploy.py --challenges path/to/challenges
     ```
 
+6. After this step, the challenges should be visible in the CTFd's admin panel. You can proceed to setup the event from there. Note that the challenges will not be publicly available until they are marked as `visible` by the admin.
+
 ### `kubernetes_deployer.py`
 
 This script is responsible for deploying the challenges on Kubernetes. It:
