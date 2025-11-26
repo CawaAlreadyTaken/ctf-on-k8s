@@ -26,6 +26,11 @@ mkdir -p $HOME/.kube
 mv kubeconfig $HOME/.kube/config
 ```
 
+You should also run this command to avoid needing to use `sudo` to run `kubectl`:
+```bash
+sudo chown -R $USER $HOME/.kube
+```
+
 ### Configure Kubernetes
 
 #### Increase the Maximum Number of Pods Allowed
@@ -47,13 +52,13 @@ sudo systemctl restart k3s
 
 We can check the nodes by running:
 ```bash
-sudo kubectl get nodes
+kubectl get nodes
 ```
 
 We can check the number of pods allowed per node with the following command:
 
 ```bash
-sudo kubectl get nodes <NODE_NAME> -o json | jq -r '.status.capacity.pods'
+kubectl get nodes <NODE_NAME> -o json | jq -r '.status.capacity.pods'
 ```
 
 #### Set the Range of Node Ports
@@ -91,7 +96,7 @@ To deploy a local registry, we can use the official Docker registry image. We ca
 `cd` into the `kubernetes/` folder of this repository, and run:
 
 ```bash
-sudo kubectl create namespace docker-registry
+kubectl create namespace docker-registry
 ```
 
 Then, in the same folder, create this `docker-registry.yaml` file:
@@ -171,12 +176,12 @@ spec:
 This YAML file creates a service and a deployment for the Docker registry, along with a persistent volume claim to store the images. You can apply this configuration with the following command:
 
 ```bash
-sudo kubectl apply -f docker-registry.yaml -n docker-registry
+kubectl apply -f docker-registry.yaml -n docker-registry
 ```
 
 If you want to check the successful result of the deployment operation, you can run:
 ```bash
-sudo kubectl get deployment,service,persistentvolumeclaim -n docker-registry
+kubectl get deployment,service,persistentvolumeclaim -n docker-registry
 ```
 
 and you should see something similar to:
@@ -200,6 +205,11 @@ mirrors:
       - "http://registry.localhost:5000"
 ```
 
+And run this command for permissions:
+```bash
+sudo chmod 644 /etc/rancher/k3s/k3s.yaml
+```
+
 We may need to restart k3s for the changes to take effect:
 
 ```bash
@@ -209,7 +219,7 @@ sudo systemctl restart k3s
 Finally, we need to configure the DNS to resolve `registry.localhost` to the IP address of the Kubernetes node. This can be done by adding an entry to the `/etc/hosts` file on the server:
 
 ```bash
-REGISTRY_IP=$(sudo kubectl get svc docker-registry-service -n docker-registry -o jsonpath='{.spec.clusterIP}')
+REGISTRY_IP=$(kubectl get svc docker-registry-service -n docker-registry -o jsonpath='{.spec.clusterIP}')
 echo "$REGISTRY_IP registry.localhost" | sudo tee -a /etc/hosts
 ```
 
