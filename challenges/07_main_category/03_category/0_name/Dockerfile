@@ -1,15 +1,27 @@
-# Make the /app directory not writeable
-RUN chmod a-w /app
+# Base light image
+FROM python:3.12-alpine
 
-# Create a nonroot user
-RUN adduser -D nonroot && \
-    chown nonroot /app
+WORKDIR /app
 
-# Make the /static directory writeable
-RUN mkdir /app/static && \
-    chown nonroot /app/static
+# Non privileged user
+RUN adduser -D nonroot
 
-# ! Important: install the required packages before switching the user
+# Create /app/static and a test file
+RUN mkdir -p /app/static \
+    && echo "Hello from main-category-01-name" > /app/static/index.html
 
-# Switch to the nonroot user before executing the CMD
+# Make /app non-writeable, but let /app/static writeable
+RUN chown -R nonroot /app \
+    && chmod a-w /app \
+    && chmod u+w /app/static
+
+# Go to non-root user
 USER nonroot
+
+EXPOSE 5000
+
+# Start an HTTP server on /app/static
+# python -m http.server serves from workdir
+WORKDIR /app/static
+CMD ["python", "-m", "http.server", "5000"]
+

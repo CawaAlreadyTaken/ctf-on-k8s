@@ -30,8 +30,8 @@ type: standard
 # List of challenges that must be solved for this challenge to be visible by the user
 # each requirement should be in the same category, and should be the unique name of the challenge
 # (i.e. the name of the folder containing this file, e.g. 01_command_injection)
-requires:
-  - 01_requirement
+# requires:
+#   - 01_requirement
 
 # List of hints, having the text and cost fields.
 # The text field can contain some markdown
