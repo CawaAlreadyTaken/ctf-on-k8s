@@ -169,7 +169,7 @@ spec:
 This YAML file creates a service and a deployment for the Docker registry, along with a persistent volume claim to store the images. You can apply this configuration with the following command:
 
 ```bash
-kubectl apply -f docker-registry.yaml -n docker-registry
+sudo kubectl apply -f docker-registry.yaml -n docker-registry
 ```
 
 If you want to check the successful result of the deployment operation, you can run:

@@ -22,7 +22,7 @@ apps_v1 = client.AppsV1Api()
 autoscaling_v1 = client.AutoscalingV1Api()
 
 DEFAULT_INTERNAL_PORT = 5000
-REGISTRY = 'registry.local:5000/'
+REGISTRY = os.environ.get("REGISTRY")
 NAMESPACE = os.environ.get("NAMESPACE")
 verbose = False
 
