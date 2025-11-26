@@ -195,7 +195,7 @@ We need to configure k3s to use the local registry by adding the following to th
 
 ```yaml
 mirrors:
-  registry.localhost:
+  "registry.localhost:5000":
     endpoint:
       - "http://registry.localhost:5000"
 ```
