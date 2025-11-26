@@ -205,6 +205,28 @@ mirrors:
       - "http://registry.localhost:5000"
 ```
 
+This command also marks the registry as insecure, using http.
+We should then notify docker as well about the insecure registry:
+
+```bash
+sudo mkdir -p /etc/docker
+```
+
+And create the file `/etc/docker/daemon.json` with the following content:
+```
+{
+  "insecure-registries": [
+    "registry.localhost:5000"
+  ]
+}
+```
+
+After this, run
+```bash
+sudo systemctl restart docker
+```
+
+
 And run this command for permissions:
 ```bash
 sudo chmod 644 /etc/rancher/k3s/k3s.yaml
