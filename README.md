@@ -151,6 +151,9 @@ We also assume that a Kubernetes cluster is already set up and a local registry 
     # The k8s namespace where challenges will be deployed
     # This should NOT be the same used for the docker registry
     NAMESPACE="example-namespace"
+
+    # The registry, probably this is fine
+    REGISTRY='registry.localhost:5000/'
     ```
 
 3. Make sure to update the `secrets.env` file with the correct values. The CTFD_API_KEY value should be equal to the SECRET_KEY variable defined in CTFd during its setup (`CTFd/docker-compose.yml`):

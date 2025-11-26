@@ -73,7 +73,7 @@ ExecStart=/usr/local/bin/k3s \
 	'--tls-san' \
 	'127.0.0.1' \
 	'--kubelet-arg=max-pods=433' \
-	'--service-node-port-range=30000-31000'
+	'--service-node-port-range=5000-10000'
 ```
 
 Then, we need to reload the systemd configuration and restart k3s:
@@ -108,11 +108,13 @@ metadata:
   labels:
     app: docker-registry
 spec:
+  type: NodePort
   selector:
     app: docker-registry
   ports:
-    - protocol: TCP
-      port: 5000
+    - port: 5000
+      targetPort: 5000
+      nodePort: 5000
 
 ---
 apiVersion: v1
@@ -177,16 +179,16 @@ If you want to check the successful result of the deployment operation, you can 
 sudo kubectl get deployment,service,persistentvolumeclaim -n docker-registry
 ```
 
-and you should see:
+and you should see something similar to:
 ```
 NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/docker-registry   1/1     1            1           2m22s
+deployment.apps/docker-registry   1/1     1            1           174m
 
-NAME                              TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE
-service/docker-registry-service   ClusterIP   10.43.21.127   <none>        5000/TCP   2m23s
+NAME                              TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)         AGE
+service/docker-registry-service   NodePort   10.43.139.184   <none>        5000:5000/TCP   174m
 
 NAME                                        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-persistentvolumeclaim/docker-registry-pvc   Bound    pvc-61e4e2cd-13e9-49cb-bf9e-d95fb079b410   10Gi       RWO            local-path     <unset>                 2m22s
+persistentvolumeclaim/docker-registry-pvc   Bound    pvc-8031f3f4-a927-4b12-8e07-1eb6fe2e18e5   10Gi       RWO            local-path     <unset>                 174m
 ```
 
 We need to configure k3s to use the local registry by adding the following to the `/etc/rancher/k3s/registries.yaml` file, or create the file with the following, if it does not exist yet:
