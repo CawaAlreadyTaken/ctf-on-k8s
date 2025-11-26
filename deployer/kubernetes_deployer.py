@@ -81,11 +81,28 @@ def create_or_update_resource(resource: dict):
 
 def run_command(command: str):
     '''
-    Run a command in a subprocess and ignore the output.
+    Run a command in a subprocess and notify on failure.
     '''
     if verbose:
         print(f"{command}", flush=True)
-    subprocess.run(command, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    completed = subprocess.run(
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    if completed.returncode != 0:
+        print(f"[red]Command failed with exit code {completed.returncode}: {command}[/red]", file=sys.stderr)
+        if completed.stdout:
+            print("[yellow]--- STDOUT ---[/yellow]")
+            print(completed.stdout)
+        if completed.stderr:
+            print("[yellow]--- STDERR ---[/yellow]", file=sys.stderr)
+            print(completed.stderr, file=sys.stderr)
+
 
 def update_pods(images: list[str]):
     '''
