@@ -24,6 +24,7 @@ autoscaling_v1 = client.AutoscalingV1Api()
 DEFAULT_INTERNAL_PORT = 5000
 REGISTRY = os.environ.get("REGISTRY")
 NAMESPACE = os.environ.get("NAMESPACE")
+CTFD_HOST = os.environ.get("CTFD_HOST")
 verbose = False
 
 def create_or_update_service(service: dict):
@@ -91,7 +92,7 @@ def update_pods(images: list[str]):
     Delete and recreate the pods of the images that have been updated.
     '''
     # Get the pods
-    pods = core_v1.list_namespaced_pod(namespace=NAMESPACE, label_selector="securitylab.disi.unitn.it/managed-by=true")
+    pods = core_v1.list_namespaced_pod(namespace=NAMESPACE, label_selector=f"{CTFD_HOST}/managed-by=true")
     pods_to_delete = []
     for pod in pods.items:
         if pod.spec.containers[0].image in images:
@@ -175,12 +176,12 @@ def clean_cluster():
     Delete all the resources created by this script.
     '''
     print("Cleaning the cluster...")
-    resources = core_v1.list_namespaced_service(namespace=NAMESPACE, label_selector="securitylab.disi.unitn.it/managed-by=true")
+    resources = core_v1.list_namespaced_service(namespace=NAMESPACE, label_selector=f"{CTFD_HOST}/managed-by=true")
     print(f"Deleting {len(resources.items)} services...")
     for resource in resources.items:
         core_v1.delete_namespaced_service(namespace=NAMESPACE, name=resource.metadata.name)
 
-    resources = apps_v1.list_namespaced_deployment(namespace=NAMESPACE, label_selector="securitylab.disi.unitn.it/managed-by=true")
+    resources = apps_v1.list_namespaced_deployment(namespace=NAMESPACE, label_selector=f"{CTFD_HOST}/managed-by=true")
     print(f"Deleting {len(resources.items)} deployments...")
     for resource in resources.items:
         apps_v1.delete_namespaced_deployment(namespace=NAMESPACE, name=resource.metadata.name)
@@ -255,7 +256,7 @@ def main(challenges: list[Challenge], build_images: bool, ignore_existing: bool 
                 "template": {
                     "metadata": {
                         "labels": {
-                            "securitylab.disi.unitn.it/managed-by": "true",
+                            f"{CTFD_HOST}/managed-by": "true",
                             "challenge": challenge.id
                         }
                     },
@@ -286,7 +287,7 @@ def main(challenges: list[Challenge], build_images: bool, ignore_existing: bool 
                     "name": challenge.id,
                     "namespace": NAMESPACE,
                     "labels": {
-                        "securitylab.disi.unitn.it/managed-by": "true"
+                        f"{CTFD_HOST}/managed-by": "true"
                     }
                 },
                 "spec": {
@@ -319,7 +320,7 @@ def main(challenges: list[Challenge], build_images: bool, ignore_existing: bool 
                 "name": challenge.id,
                 "namespace": NAMESPACE,
                 "labels": {
-                    "securitylab.disi.unitn.it/managed-by": "true"
+                    f"{CTFD_HOST}/managed-by": "true"
                 }
             },
             "spec": {

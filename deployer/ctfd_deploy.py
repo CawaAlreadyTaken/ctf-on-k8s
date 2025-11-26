@@ -17,9 +17,9 @@ import re
 
 load_dotenv("config.env")
 load_dotenv("secrets.env")
-CTFD_HOST = os.environ.get("CTFD_HOST", "securitylab.disi.unitn.it")
-CTFD_API_KEY = os.environ.get("CTFD_API_KEY", "")
-CHALLENGES_HOST = os.environ.get("CHALLENGES_HOST", "securitylab.disi.unitn.it")
+CTFD_HOST = os.environ.get("CTFD_HOST")
+CTFD_API_KEY = os.environ.get("CTFD_API_KEY")
+CHALLENGES_HOST = os.environ.get("CHALLENGES_HOST")
 
 CHALL_ID_REGEX = re.compile(r"\[\]\(ID:(.+)\)")
 
