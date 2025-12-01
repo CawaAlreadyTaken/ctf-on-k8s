@@ -2,7 +2,7 @@
 
 This repository contains the script and the instructions to deploy a CTF platform based on CTFd on Kubernetes, with challenges implemented as Docker containers.
 
-We use this infrastructure for the [Ethical Hacking](https://unitn.coursecatalogue.cineca.it/insegnamenti/2023/50328_642347_96202/2011/50328/10117?annoOrdinamento=2011) course at the University of Trento, Italy.
+We use this infrastructure for the [Ethical Hacking](https://unitn.coursecatalogue.cineca.it/insegnamenti/2023/50328_642347_96202/2011/50328/10117) course at the University of Trento, Italy.
 
 ## Why Kubernetes?
 
