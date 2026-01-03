@@ -6,14 +6,15 @@ This file includes instructions on how to setup Kubernetes and an image registry
 
 The easiest way to install Kubernetes in our experience is to use [k3sup](https://github.com/alexellis/k3sup), a "light-weight utility to get from zero to KUBECONFIG with k3s on any local or remote VM"
 
-In order to install k3sup, it's enough to run:
+To install `k3sup`, we need to run:
+
 ```bash
 curl -sLS https://get.k3sup.dev | sh
 sudo install k3sup /usr/local/bin/
 rm k3sup
 ```
 
-After cloning the ctf-on-k8s repository on the server, we just need to run the following command:
+To install Kubernetes locally, we just need to run the following command:
 
 ```bash
 k3sup install --local
@@ -26,7 +27,8 @@ mkdir -p $HOME/.kube
 mv kubeconfig $HOME/.kube/config
 ```
 
-You should also run this command to avoid needing to use `sudo` to run `kubectl`:
+To avoid the need to use `sudo` when running `kubectl` commands, we need to change the ownership of the `.kube` folder to the current user:
+
 ```bash
 sudo chown -R $USER $HOME/.kube
 ```
@@ -41,9 +43,9 @@ After installing Kubernetes, we need to increase the maximum number of pods allo
 sudo vim /etc/systemd/system/k3s.service
 ```
 
-and adding `'--kubelet-arg=max-pods=433'` to the end of the `ExecStart` command.
+and adding `'--kubelet-arg=max-pods=433'` to the end of the `ExecStart` command (`433` is just a specific arbitrary number that makes it easier to debug if we encounter issues).
 
-After that, we need to reload the systemd configuration and restart k3s:
+After that, we need to reload the `systemd` configuration and restart k3s:
 
 ```bash
 sudo systemctl daemon-reload
@@ -51,6 +53,7 @@ sudo systemctl restart k3s
 ```
 
 We can check the nodes by running:
+
 ```bash
 kubectl get nodes
 ```
@@ -69,19 +72,20 @@ We need to specify the range of ports allowed in the node port field of services
 sudo vim /etc/systemd/system/k3s.service
 ```
 
-and add `'--service-node-port-range=MIN_PORT-MAX_PORT'` to the end of the `ExecStart` command. The suggested range is 5000-40000 to have the 5000 included and also include the Traefik (kube traffic manager) ports.
+and add `'--service-node-port-range=MIN_PORT-MAX_PORT'` to the end of the `ExecStart` command. The suggested range is 5000-40000 to have the 5000 included and also include the Traefik (Kubernetes traffic manager) ports.
 
 After this, the `ExecStart` command should be something like this:
+
 ```bash
 ExecStart=/usr/local/bin/k3s \
     server \
-	'--tls-san' \
-	'127.0.0.1' \
-	'--kubelet-arg=max-pods=433' \
-	'--service-node-port-range=5000-40000'
+    '--tls-san' \
+    '127.0.0.1' \
+    '--kubelet-arg=max-pods=433' \
+    '--service-node-port-range=5000-40000'
 ```
 
-Then, we need to reload the systemd configuration and restart k3s:
+Then, we need to reload the `systemd` configuration and restart k3s:
 
 ```bash
 sudo systemctl daemon-reload
@@ -93,110 +97,33 @@ sudo systemctl restart k3s
 ## Setup a Local Registry
 
 To deploy a local registry, we can use the official Docker registry image. We can create a Kubernetes deployment and service for the registry as follows.
-`cd` into the `kubernetes/` folder of this repository, and run:
+
+We can create the namespace, deployment and service by applying the `docker-registry.yaml` file located in this directory:
 
 ```bash
-kubectl create namespace docker-registry
+kubectl apply -f docker-registry.yaml
 ```
 
-Then, in the same folder, create this `docker-registry.yaml` file:
+To check if the deployment was successful, we can run:
 
-```yaml
-# Local Docker registry running in Kubernetes - for k3s
-# docker-registry.yaml
-#---
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: docker-registry-service
-  labels:
-    app: docker-registry
-spec:
-  type: NodePort
-  selector:
-    app: docker-registry
-  ports:
-    - port: 5000
-      targetPort: 5000
-      nodePort: 5000
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: docker-registry-pvc
-  labels:
-    app: docker-registry
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: local-path
-  resources:
-    requests:
-      storage: 10Gi
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: docker-registry
-  labels:
-    app: docker-registry
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: docker-registry
-  template:
-    metadata:
-      labels:
-        app: docker-registry
-    spec:
-      containers:
-      - name: docker-registry
-        image: registry:2
-        ports:
-        - containerPort: 5000
-          protocol: TCP
-        volumeMounts:
-        - name: storage
-          mountPath: /var/lib/registry
-        env:
-        - name: REGISTRY_HTTP_ADDR
-          value: :5000
-        - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
-          value: /var/lib/registry
-      volumes:
-      - name: storage
-        persistentVolumeClaim:
-          claimName: docker-registry-pvc
-```
-
-This YAML file creates a service and a deployment for the Docker registry, along with a persistent volume claim to store the images. You can apply this configuration with the following command:
-
-```bash
-kubectl apply -f docker-registry.yaml -n docker-registry
-```
-
-If you want to check the successful result of the deployment operation, you can run:
 ```bash
 kubectl get deployment,service,persistentvolumeclaim -n docker-registry
 ```
 
-and you should see something similar to:
-```
+We should see output similar to this:
+
+```bash
 NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
 deployment.apps/docker-registry   1/1     1            1           174m
 
-NAME                              TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)         AGE
-service/docker-registry-service   NodePort   10.43.139.184   <none>        5000:5000/TCP   174m
+NAME                              TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+service/docker-registry-service   ClusterIP   10.43.16.113    <none>        5000/TCP         174m
 
-NAME                                        STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
-persistentvolumeclaim/docker-registry-pvc   Bound    pvc-8031f3f4-a927-4b12-8e07-1eb6fe2e18e5   10Gi       RWO            local-path     <unset>                 174m
+NAME                                        STATUS   VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/docker-registry-pvc   Bound    pvc-id    10Gi       RWO            local-path     <unset>                 174m
 ```
 
-We need to configure k3s to use the local registry by adding the following to the `/etc/rancher/k3s/registries.yaml` file, or create the file with the following, if it does not exist yet:
+To configure k3s to use the local registry we need to add the following to the `/etc/rancher/k3s/registries.yaml` file (or create it if it does not exist):
 
 ```yaml
 mirrors:
@@ -205,15 +132,15 @@ mirrors:
       - "http://registry.localhost:5000"
 ```
 
-This command also marks the registry as insecure, using http.
-We should then notify docker as well about the insecure registry:
+This command also marks the registry as insecure, using HTTP. We should then notify Docker about this insecure registry. First, create the Docker configuration directory if it does not exist:
 
 ```bash
 sudo mkdir -p /etc/docker
 ```
 
-And create the file `/etc/docker/daemon.json` with the following content:
-```
+Then, create the file `/etc/docker/daemon.json` with the following content:
+
+```json
 {
   "insecure-registries": [
     "registry.localhost:5000"
@@ -221,24 +148,27 @@ And create the file `/etc/docker/daemon.json` with the following content:
 }
 ```
 
-After this, run
+After that, we need to restart Docker:
+
 ```bash
 sudo systemctl restart docker
 ```
 
+And give proper permissions to the `k3s.yaml` file:
 
-And run this command for permissions:
 ```bash
 sudo chmod 644 /etc/rancher/k3s/k3s.yaml
 ```
 
-We may need to restart k3s for the changes to take effect:
+We may need to restart k3s to apply the changes:
 
 ```bash
 sudo systemctl restart k3s
 ```
 
-Finally, we need to configure the DNS to resolve `registry.localhost` to the IP address of the Kubernetes node. This can be done by adding an entry to the `/etc/hosts` file on the server:
+Finally, we need to configure the DNS to resolve `registry.localhost` to the IP address of the registry service (`10.43.16.113` in the example above).
+
+We can do this by adding the following line to the `/etc/hosts` file:
 
 ```bash
 REGISTRY_IP=$(kubectl get svc docker-registry-service -n docker-registry -o jsonpath='{.spec.clusterIP}')
@@ -252,17 +182,17 @@ docker build -t registry.localhost/test:latest .
 docker push registry.localhost/test:latest
 ```
 
-## Python env
+## Python Environment
 
-The script `deployer/kubernetes_deployer.py` requires specific modules. The fastest way to do this is to create an environment with [micromamba](https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html).
+The script `deployer/kubernetes_deployer.py` requires specific modules. The fastest way to manage them is to create an environment with [micromamba](https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html).
 
-After installation, create the enviroment by using, inside `kubernetes/`:
+After installation, we can create the environment inside `kubernetes/` with the following command:
 
 ```bash
 micromamba create -f micromamba-env.yaml
 ```
 
-It will automatically install all the dependencies. To activate it, simply use:
+It will automatically install all the dependencies. To activate it, we need to run:
 
 ```bash
 micromamba activate ctfkube
