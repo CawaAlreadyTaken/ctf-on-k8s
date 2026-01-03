@@ -4,6 +4,5 @@ channels:
 dependencies:
   - python=3.11
   - pip:
-      - python-dotenv==1.2.1
       - kubernetes==33.1.0
       - rich==14.0.0
