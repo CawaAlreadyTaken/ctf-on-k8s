@@ -197,4 +197,3 @@ repo-challenges/
 
 secrets.env
 config.env
-kubernetes/docker-registry.yaml

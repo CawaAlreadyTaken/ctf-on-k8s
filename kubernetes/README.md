@@ -31,6 +31,7 @@ To avoid the need to use `sudo` when running `kubectl` commands, we need to chan
 
 ```bash
 sudo chown -R $USER $HOME/.kube
+sudo chown -R $USER /etc/rancher/k3s/k3s.yaml
 ```
 
 ### Configure Kubernetes
@@ -92,13 +93,11 @@ sudo systemctl daemon-reload
 sudo systemctl restart k3s
 ```
 
-**Note**: the `MIN_PORT` should be high enough to not collide with previously existing services (it is recommended at least above 7000). Even better would be to have the challenges directly within the predefined Kubernetes range >30000.
-
 ## Setup a Local Registry
 
 To deploy a local registry, we can use the official Docker registry image. We can create a Kubernetes deployment and service for the registry as follows.
 
-We can create the namespace, deployment and service by applying the `docker-registry.yaml` file located in this directory:
+We can create the namespace, deployment and service by applying the `docker-registry.yaml` file located in this directory. Move to this directory, and run:
 
 ```bash
 kubectl apply -f docker-registry.yaml
