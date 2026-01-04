@@ -167,7 +167,7 @@ sudo systemctl restart k3s
 
 Finally, we need to configure the DNS to resolve `registry.localhost` to the IP address of the registry service (`10.43.16.113` in the example above).
 
-We can do this by adding the following line to the `/etc/hosts` file:
+We can do this by running the following command, that adds one line to the `/etc/hosts` file:
 
 ```bash
 REGISTRY_IP=$(kubectl get svc docker-registry-service -n docker-registry -o jsonpath='{.spec.clusterIP}')
@@ -185,7 +185,7 @@ docker push registry.localhost/test:latest
 
 The script `deployer/kubernetes_deployer.py` requires specific modules. The fastest way to manage them is to create an environment with [micromamba](https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html).
 
-After installation, we can create the environment inside `kubernetes/` with the following command:
+After the micromamba installation, we can create the environment inside `kubernetes/` with the following command:
 
 ```bash
 micromamba create -f micromamba-env.yaml

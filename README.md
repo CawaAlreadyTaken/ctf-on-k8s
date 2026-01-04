@@ -156,7 +156,7 @@ We also assume that a Kubernetes cluster is already set up and a local registry 
     REGISTRY='registry.localhost:5000/'
     ```
 
-3. Make sure to update the `secrets.env` file with the correct values. The CTFD_API_KEY value should be equal to the SECRET_KEY variable defined in CTFd during its setup (`CTFd/docker-compose.yml`):
+3. Make sure to update the `secrets.env` file with the correct values. The CTFD_API_KEY value should be equal to the CTFD_API_KEY you obtain by visiting the CTFd dashboard as previously described.
 
     ```bash
     # CTFd API key, the token previously copied
