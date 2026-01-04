@@ -102,6 +102,8 @@ def main(challenges_folder=CALLENGES_FOLDER) -> dict[str, list[Challenge]]:
     challs: list[Challenge] = []
 
     for category in folders:
+        if ".git" in category:
+            continue
         match = CATEGORY_REGEX.match(category)
         
         if match is None:
